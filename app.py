@@ -1,11 +1,11 @@
 import os
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 import sys
 import json
 import cv2
 import numpy as np
+import keras
 import tensorflow as tf
 from PIL import Image
 from ultralytics import YOLO
@@ -50,13 +50,9 @@ def load_models():
 
     detector = YOLO(yolo_path)
     try:
-        classifier = tf.keras.models.load_model(clf_path, compile=False)
+        classifier = keras.models.load_model(clf_path, compile=False)
     except Exception:
-        try:
-            import tf_keras
-            classifier = tf_keras.models.load_model(clf_path, compile=False)
-        except Exception:
-            classifier = tf.keras.models.load_model(clf_path, compile=False, safe_mode=False)
+        classifier = tf.keras.models.load_model(clf_path, compile=False)
 
     with open(map_path, 'r', encoding='utf-8') as f:
         mapping = json.load(f)
