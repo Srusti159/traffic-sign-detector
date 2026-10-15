@@ -1,4 +1,7 @@
 import os
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 import sys
 import json
 import cv2
@@ -37,16 +40,25 @@ st.markdown("""
 # ==========================================
 @st.cache_resource
 def load_models():
-    yolo_path = "models/best_yolo.pt"
-    clf_path = "models/traffic_sign_classifier.keras"
-    map_path = "models/class_indices.json"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    yolo_path = os.path.join(base_dir, "models", "best_yolo.pt")
+    clf_path = os.path.join(base_dir, "models", "traffic_sign_classifier.keras")
+    map_path = os.path.join(base_dir, "models", "class_indices.json")
 
     if not os.path.exists(yolo_path) or not os.path.exists(clf_path) or not os.path.exists(map_path):
         return None, None, None
 
     detector = YOLO(yolo_path)
-    classifier = tf.keras.models.load_model(clf_path)
-    with open(map_path, 'r') as f:
+    try:
+        classifier = tf.keras.models.load_model(clf_path, compile=False)
+    except Exception:
+        try:
+            import tf_keras
+            classifier = tf_keras.models.load_model(clf_path, compile=False)
+        except Exception:
+            classifier = tf.keras.models.load_model(clf_path, compile=False, safe_mode=False)
+
+    with open(map_path, 'r', encoding='utf-8') as f:
         mapping = json.load(f)
     return detector, classifier, mapping
 
